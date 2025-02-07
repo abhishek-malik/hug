@@ -20,18 +20,21 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 """
 from hug.exceptions import StoreKeyNotFound
+from concurrent.futures import ThreadPoolExecutor
 
 
 class InMemoryStore:
     """
     Naive store class which can be used for the session middleware and unit tests.
-    It is not thread-safe and no data will survive the lifecycle of the hug process.
+    ~~It is not thread-safe and no data will survive the lifecycle of the hug process.~~
+    It is thread-safe and data will survive the lifecycle of the hug process.
     Regard this as a blueprint for more useful and probably more complex store implementations, for example stores
     which make use of databases like Redis, PostgreSQL or others.
     """
 
-    def __init__(self):
+    def __init__(self, max_workers=10):
         self._data = {}
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
     def get(self, key):
         """Get data for given store key. Raise hug.exceptions.StoreKeyNotFound if key does not exist."""
@@ -53,3 +56,16 @@ class InMemoryStore:
         """Delete data for given store key."""
         if key in self._data:
             del self._data[key]
+
+    # Add async methods to be followed by milldleware to ensure parallelism
+    def async_get(self, key):
+        return self._executor.submit(self.get, key)
+
+    def async_set(self, key, data):
+        return self._executor.submit(self.set, key, data)
+    
+    def async_delete(self, key):
+        return self._executor.submit(self.delete, key)
+    
+    def async_exists(self, key):
+        return self._executor.submit(self.exists, key)

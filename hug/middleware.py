@@ -18,6 +18,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 """
 from __future__ import absolute_import
+from concurrent.futures import ThreadPoolExecutor
 
 import logging
 import re
@@ -50,6 +51,7 @@ class SessionMiddleware(object):
         "cookie_path",
         "cookie_secure",
         "cookie_http_only",
+        "session_data_executor"
     )
 
     def __init__(
@@ -63,6 +65,7 @@ class SessionMiddleware(object):
         cookie_path=None,
         cookie_secure=True,
         cookie_http_only=True,
+        max_workers = 10
     ):
         self.store = store
         self.context_name = context_name
@@ -73,10 +76,16 @@ class SessionMiddleware(object):
         self.cookie_path = cookie_path
         self.cookie_secure = cookie_secure
         self.cookie_http_only = cookie_http_only
+        self.session_data_executor = ThreadPoolExecutor(max_workers==max_workers)
 
     def generate_sid(self):
         """Generate a UUID4 string."""
         return str(uuid.uuid4())
+    
+    def get_session_data(self, sid):
+        if self.store.exists(sid):
+            return self.store.get(sid)
+        return {}
 
     def process_request(self, request, response):
         """Get session ID from cookie, load corresponding session data from coupled store and inject session data into
@@ -85,8 +94,9 @@ class SessionMiddleware(object):
         sid = request.cookies.get(self.cookie_name, None)
         data = {}
         if sid is not None:
-            if self.store.exists(sid):
-                data = self.store.get(sid)
+            future = self.session_data_executor.submit(self.get_session_data, sid)
+            data = future.result()
+
         request.context.update({self.context_name: data})
 
     def process_response(self, request, response, resource, req_succeeded):
@@ -95,7 +105,9 @@ class SessionMiddleware(object):
         if sid is None or not self.store.exists(sid):
             sid = self.generate_sid()
 
-        self.store.set(sid, request.context.get(self.context_name, {}))
+        # Session state might change for multiple users/windows, we will be able to update the store parallely
+        self.session_data_executor.submit(self.store.set, sid, request.context.get(self.context_name, {}))
+
         response.set_cookie(
             self.cookie_name,
             sid,
