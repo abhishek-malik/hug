@@ -21,6 +21,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 from hug.exceptions import StoreKeyNotFound
 from concurrent.futures import ThreadPoolExecutor
+import threading
 
 
 class InMemoryStore:
@@ -34,28 +35,33 @@ class InMemoryStore:
 
     def __init__(self, max_workers=10):
         self._data = {}
+        self._lock = threading.Lock()
         self._executor = ThreadPoolExecutor(max_workers=max_workers)
 
     def get(self, key):
         """Get data for given store key. Raise hug.exceptions.StoreKeyNotFound if key does not exist."""
-        try:
-            data = self._data[key]
-        except KeyError:
-            raise StoreKeyNotFound(key)
-        return data
+        with self._lock:
+            try:
+                data = self._data[key]
+            except KeyError:
+                raise StoreKeyNotFound(key)
+            return data
 
     def exists(self, key):
-        """Return whether key exists or not."""
-        return key in self._data
+        with self._lock:
+            """Return whether key exists or not."""
+            return key in self._data
 
     def set(self, key, data):
-        """Set data object for given store key."""
-        self._data[key] = data
+        with self._lock:
+            """Set data object for given store key."""
+            self._data[key] = data
 
     def delete(self, key):
-        """Delete data for given store key."""
-        if key in self._data:
-            del self._data[key]
+        with self._lock:
+            """Delete data for given store key."""
+            if key in self._data:
+                del self._data[key]
 
     # Add async methods to be followed by milldleware to ensure parallelism
     def async_get(self, key):

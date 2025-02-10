@@ -42,7 +42,7 @@ class SessionMiddleware(object):
     """
 
     __slots__ = (
-        "store",
+        "store_wrapper",
         "context_name",
         "cookie_name",
         "cookie_expires",
