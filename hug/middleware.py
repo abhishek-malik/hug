@@ -24,7 +24,7 @@ import logging
 import re
 import uuid
 from datetime import datetime
-
+from hug.store import StoreWrapper
 
 class SessionMiddleware(object):
     """Simple session middleware.
@@ -42,7 +42,7 @@ class SessionMiddleware(object):
     """
 
     __slots__ = (
-        "store_wrapper",
+        "store",
         "context_name",
         "cookie_name",
         "cookie_expires",
@@ -56,7 +56,7 @@ class SessionMiddleware(object):
 
     def __init__(
         self,
-        store,
+        store_type="inmemory",
         context_name="session",
         cookie_name="sid",
         cookie_expires=None,
@@ -67,7 +67,7 @@ class SessionMiddleware(object):
         cookie_http_only=True,
         max_workers = 10
     ):
-        self.store = store
+        self.store = StoreWrapper(store_type)
         self.context_name = context_name
         self.cookie_name = cookie_name
         self.cookie_expires = cookie_expires
@@ -76,7 +76,7 @@ class SessionMiddleware(object):
         self.cookie_path = cookie_path
         self.cookie_secure = cookie_secure
         self.cookie_http_only = cookie_http_only
-        self.session_data_executor = ThreadPoolExecutor(max_workers==max_workers)
+        self.session_data_executor = ThreadPoolExecutor(max_workers=max_workers)
 
     def generate_sid(self):
         """Generate a UUID4 string."""
