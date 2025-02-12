@@ -1,10 +1,10 @@
 import sqlite3
 import json
-import logging
+from hug.logger_mixin import LoggerMixin
 
 class SQLStore:
-    def __init__(self, db_path=':memory:', logger=None):
-        self._logger = logger if logger is not None else logging.getLogger("hug")
+    def __init__(self, db_path=':memory:', logger_name="hug"):
+        super().__init__(logger_name)
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._cursor = self._conn.cursor()
         self._cursor.execute('''CREATE TABLE IF NOT EXISTS sessions (
