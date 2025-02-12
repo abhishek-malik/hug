@@ -13,7 +13,7 @@ class MongoDBStore:
         try:
             return self._collection.find_one({"_id": key}) or {}
         except Exception as e:
-            self._logger.exception(f"MongoDB exception: {e}")
+            self._logger.exception("MongoDB exception: {}".format(str(e)))
             return {}
 
     def set(self, key, data):
@@ -21,14 +21,14 @@ class MongoDBStore:
             data['createdAt'] = uuid.uuid1().time
             self._collection.update_one({"_id": key}, {"$set": data}, upsert=True)
         except Exception as e:
-            self._logger.exception(f"MongoDB exception: {e}")
+            self._logger.exception("MongoDB exception: {}".format(str(e)))
             raise
 
     def exists(self, key):
         try:
             return self._collection.count_documents({"_id": key}, limit=1) > 0
         except Exception as e:
-            self._logger.exception(f"MongoDB exception: {e}")
+            self._logger.exception("MongoDB exception: {}".format(str(e)))
             raise
         
 
@@ -36,5 +36,5 @@ class MongoDBStore:
         try:
             self._collection.delete_one({"_id": key})
         except Exception as e:
-            self._logger.exception(f"MongoDB exception: {e}")
+            self._logger.exception("MongoDB exception: {}".format(str(e)))
             raise

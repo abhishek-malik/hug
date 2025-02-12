@@ -19,7 +19,7 @@ class SQLStore:
             row = self._cursor.fetchone()
             return json.loads(row[0]) if row else {}
         except Exception as e:
-            self._logger.exception(f"SQL Exception: {e}")
+            self._logger.exception("SQL Exception: {}".format(str(e)))
             return {}
 
     def set(self, key, data):
@@ -27,7 +27,7 @@ class SQLStore:
             self._cursor.execute("REPLACE INTO sessions (id, data) VALUES (?, ?)", (key, json.dumps(data)))  # Serialize JSON
             self._conn.commit()
         except Exception as e:
-            self._logger.exception(f"SQL Exception: {e}")
+            self._logger.exception("SQL Exception: {}".format(str(e)))
             raise
 
     def exists(self, key):
@@ -35,7 +35,7 @@ class SQLStore:
             self._cursor.execute("SELECT 1 FROM sessions WHERE id = ?", (key,))
             return self._cursor.fetchone() is not None
         except Exception as e:
-            self._logger.exception(f"SQL Exception: {e}")
+            self._logger.exception("SQL Exception: {}".format(str(e)))
             raise
 
     def delete(self, key):
@@ -43,5 +43,5 @@ class SQLStore:
             self._cursor.execute("DELETE FROM sessions WHERE id = ?", (key,))
             self._conn.commit()
         except Exception as e:
-            self._logger.exception(f"SQL Exception: {e}")
+            self._logger.exception("SQL Exception: {}".format(str(e)))
             raise
