@@ -1,7 +1,7 @@
 from hug.stores.inmemory_store import InMemoryStore
-from hug.stores.inmemory_store import RedisStore
-from hug.stores.inmemory_store import MongoDBStore
-from hug.stores.inmemory_store import SQLStore
+from hug.stores.redis_store import RedisStore
+from hug.stores.mongo_store import MongoDBStore
+from hug.stores.sql_store import SQLStore
 
 class StoreWrapper:
     def __init__(self, store_type='inmemory', **kwargs):
