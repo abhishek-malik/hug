@@ -1,10 +1,10 @@
 from pymongo import MongoClient
-from hug.logger_mixin import LoggerMixin
+import logging
 import uuid
 
 class MongoDBStore:
-    def __init__(self, uri='mongodb://localhost:27017/', db_name='session_db', collection_name='sessions', ttl=3600, logger_name="hug"):
-        super().__init__(logger_name)
+    def __init__(self, uri='mongodb://localhost:27017/', db_name='session_db', collection_name='sessions', ttl=3600, logger=None):
+        self._logger = logger if logger is not None else logging.getLogger("hug")
         self._client = MongoClient(uri)
         self._collection = self._client[db_name][collection_name]
         self._collection.create_index("createdAt", expireAfterSeconds=ttl)
